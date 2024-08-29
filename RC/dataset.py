@@ -25,7 +25,7 @@ class DataSaver:
         self.ats.registerCallback(self.callback)
 
         # Open CSV file for writing
-        self.csv_file = open('tile_data_v2.csv', 'w')
+        self.csv_file = open('free_drive.csv', 'w')
         self.csv_writer = csv.writer(self.csv_file)
         self.csv_writer.writerow(['timestamp', 'x', 'y', 'z', 'yaw','v_horizontal','v_vertical','accel', 'steer'])
         self.prev_time = time.time()
