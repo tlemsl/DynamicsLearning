@@ -245,7 +245,7 @@ class BsplineLie:
         Tangent_vector_on_pose = A0dot @ A1.transform() @ A2.transform() + A0.transform() @ A1dot @ A2.transform() + A0.transform() @ A1.transform() @ A2dot
 
         # Finally get the interpolated velocities
-        vel_interp = pose0.transform() @ Tangent_vector_on_pose
+        vel_interp = pose_interp.transform() @ pose0.transform() @ Tangent_vector_on_pose
         # vel_interp = pose0.transform() @ lie.SE2Tangent(Tangent_vector_on_pose[0, 2], Tangent_vector_on_pose[1, 2], Tangent_vector_on_pose[1, 0]).hat()
         # vel = (pose_interp.inverse().transform() @ vel_interp)
         # x = vel[0, 2]
