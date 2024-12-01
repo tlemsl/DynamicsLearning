@@ -1,0 +1,2 @@
+This project is about learning dynamics of a robot using spline based continuous dynamics learning.
+To compare the performance of the learned dynamics with the true dynamics, we will use a NN discrete model and physical based Model.
