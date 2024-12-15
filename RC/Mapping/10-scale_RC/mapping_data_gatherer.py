@@ -5,7 +5,6 @@ import csv
 import time
 import argparse
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseStamped
 from ackermann_msgs.msg import AckermannDriveStamped
 from message_filters import Subscriber, ApproximateTimeSynchronizer
 
@@ -15,12 +14,12 @@ class DataSaver:
         rospy.init_node('data_saver')
 
         # Create subscribers
-        self.pose_sub = Subscriber('/mushr_mujoco_ros/buddy/pose', PoseStamped)
-        self.cmd_sub = Subscriber('/mushr_mujoco_ros/buddy/control', AckermannDriveStamped)
+        self.odom_sub = Subscriber('/odometry/filtered', Odometry)
+        self.cmd_sub = Subscriber('/base_board/controller_cmd', AckermannDriveStamped)
 
         # Synchronize the messages with an approximate time policy
         self.ats = ApproximateTimeSynchronizer(
-            [self.pose_sub, self.cmd_sub],
+            [self.odom_sub, self.cmd_sub],
             queue_size=100,
             slop=0.1
         )
@@ -29,31 +28,34 @@ class DataSaver:
         # Open CSV file for writing
         self.csv_file = open(csv_filename, 'w')
         self.csv_writer = csv.writer(self.csv_file)
-        self.csv_writer.writerow(['timestamp', 'x', 'y', 'yaw', 'accel', 'steer'])
+        self.csv_writer.writerow(['timestamp', 'x', 'y', 'z', 'yaw', 'v_horizontal', 'v_vertical', 'omega', 'velocity', 'steering_angle'])
 
         self.prev_time = time.time()
         rospy.loginfo("Data saver node started.")
         rospy.spin()
 
-    def callback(self, pose_msg, cmd_msg):
+    def callback(self, odom_msg, cmd_msg):
         # Extract the timestamp (using odom_msg's timestamp as the reference)
-        timestamp = pose_msg.header.stamp.to_sec()
+        timestamp = odom_msg.header.stamp.to_sec()
 
         # Extract data from Odometry message
-        x = pose_msg.pose.position.x
-        y = pose_msg.pose.position.y
-        
-        
+        x = odom_msg.pose.pose.position.x
+        y = odom_msg.pose.pose.position.y
+        z = odom_msg.pose.pose.position.z
+        v_hor = odom_msg.twist.twist.linear.x
+        v_vert = odom_msg.twist.twist.linear.y
+        omega = odom_msg.twist.twist.angular.z
+
         # Assuming the orientation is given in quaternion and converting to yaw
-        _, _, yaw = self.quaternion_to_euler(pose_msg.pose.orientation)
+        _, _, yaw = self.quaternion_to_euler(odom_msg.pose.pose.orientation)
 
         # Extract data from TwistStamped message
-        speed = cmd_msg.drive.speed
-        steer = cmd_msg.drive.steering_angle
+        velocity = cmd_msg.drive.speed
+        steering_angle = cmd_msg.drive.steering_angle
 
         # Write data to CSV
         now = time.time()
-        self.csv_writer.writerow([timestamp, x, y, yaw, speed, steer])
+        self.csv_writer.writerow([timestamp, x, y, z, yaw, v_hor, v_vert, omega, velocity, steering_angle])
         print(f"Curr HZ {1 / (now - self.prev_time)}")
         self.prev_time = now
 
